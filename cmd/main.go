@@ -2,12 +2,14 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gorpc-experiments/GalaxyClient"
 	"log"
 	"net/http"
 	"net/rpc"
 	"os"
+	"strings"
 )
 
 type Args struct {
@@ -37,6 +39,11 @@ func (t *Arith) Divide(args *Args, quo *Quotient) error {
 }
 
 func main() {
+	for _, e := range os.Environ() {
+		pair := strings.SplitN(e, "=", 2)
+		fmt.Println(pair[0], "=", pair[1])
+	}
+
 	arith := new(Arith)
 	err := rpc.Register(arith)
 
