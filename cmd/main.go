@@ -47,7 +47,7 @@ func main() {
 	arith := new(Arith)
 	err := rpc.Register(arith)
 
-	client, err := GalaxyClient.NewGalaxyClient("localhost:1234")
+	client, err := GalaxyClient.NewGalaxyClient()
 
 	if err != nil {
 		log.Println(err.Error())
