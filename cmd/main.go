@@ -3,12 +3,14 @@ package main
 import (
 	"errors"
 	"fmt"
+	"github.com/AliceDiNunno/KubernetesUtil"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gorpc-experiments/GalaxyClient"
 	"log"
 	"net/http"
 	"net/rpc"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -38,6 +40,26 @@ func (t *Arith) Divide(args *Args, quo *Quotient) error {
 	return nil
 }
 
+func getPort() int {
+	port := 0
+	if KubernetesUtil.IsRunningInKubernetes() {
+		port = KubernetesUtil.GetInternalServicePort()
+	}
+	if port == 0 {
+		env_port := os.Getenv("PORT")
+		if env_port == "" {
+			log.Fatalln("PORT env variable isn't set")
+		}
+		envport, err := strconv.Atoi(env_port)
+		if err != nil {
+			log.Fatalln(err.Error())
+		}
+		port = envport
+	}
+
+	return port
+}
+
 func main() {
 	for _, e := range os.Environ() {
 		pair := strings.SplitN(e, "=", 2)
@@ -57,8 +79,10 @@ func main() {
 	client.RegisterToGalaxy(arith)
 
 	rpc.HandleHTTP()
+	port := getPort()
 
-	err = http.ListenAndServe(":2345", nil)
+	println("Divide is running on port", port)
+	err = http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 	if err != nil {
 		log.Println(err.Error())
 	}
