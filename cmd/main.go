@@ -2,12 +2,8 @@ package main
 
 import (
 	"errors"
-	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/gorpc-experiments/ServiceCore"
 	"log"
-	"net/http"
-	"net/rpc"
 	"os"
 )
 
@@ -20,7 +16,9 @@ type Quotient struct {
 	Err      string
 }
 
-type Arith int
+type Arith struct {
+	ServiceCore.CoreHealth
+}
 
 func (t *Arith) Divide(args *Args, quo *Quotient) error {
 	if args.B == 0 {
@@ -32,29 +30,15 @@ func (t *Arith) Divide(args *Args, quo *Quotient) error {
 	hostname, _ := os.Hostname()
 	quo.Err = hostname
 
-	spew.Dump(args, quo)
+	log.Printf("%d/ %d = %d rem %d\n", args.A, args.B, quo.Quo, quo.Rem)
 
 	return nil
 }
 
 func main() {
+	ServiceCore.SetupLogging()
+
 	arith := new(Arith)
-	err := rpc.Register(arith)
 
-	client, err := ServiceCore.NewGalaxyClient()
-
-	if err != nil {
-		log.Println(err.Error())
-		return
-	}
-
-	client.RegisterToGalaxy(arith)
-
-	rpc.HandleHTTP()
-
-	println("Divide is running on port", client.ClientHost, client.ClientPort)
-	err = http.ListenAndServe(fmt.Sprintf(":%d", client.ClientPort), nil)
-	if err != nil {
-		log.Println(err.Error())
-	}
+	ServiceCore.PublishMicroService(arith, true)
 }
